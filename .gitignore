@@ -175,3 +175,5 @@ cython_debug/
 
 # Everything inside the ./data directory
 data/
+
+playground.ipynb
