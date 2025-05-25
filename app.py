@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.utils.multiclass import type_of_target
 import streamlit as st
 import time
+from utils.utils import train_and_evaluate_model
 
 # Configuration
 st.set_page_config(
@@ -35,6 +36,8 @@ if "target" not in st.session_state:
     st.session_state.target = None
 if "selected_model" not in st.session_state:
     st.session_state.selected_model = None
+if "metrics_df" not in st.session_state:
+    st.session_state.metrics_df = None
 
 
 def training_toast_handler(model_name: str = None):
@@ -52,6 +55,7 @@ def training_toast_handler(model_name: str = None):
         f"Model `{model_name}` "
         "trained successfully!"
     )
+
 
 def main():
     """Main application workflow"""
@@ -147,9 +151,23 @@ def main():
                 # Launch model training
                 if st.session_state.selected_model:
                     if st.button("Train Model"):
+                        st.session_state.metrics_df = train_and_evaluate_model(
+                            task_type,
+                            st.session_state.selected_model,
+                            st.session_state.input_df,
+                            st.session_state.features,
+                            st.session_state.target
+                        )
                         training_toast_handler(
                             model_name=st.session_state.selected_model
                         )
+
+                if st.session_state.metrics_df is not None:
+                    st.subheader("📈 Model Evaluation Metrics")
+                    st.dataframe(
+                        st.session_state.metrics_df,
+                        use_container_width=True
+                    )
 
 
 if __name__ == "__main__":
