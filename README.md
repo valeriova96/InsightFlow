@@ -7,6 +7,8 @@
 - Get tailored model recommendations
 - (Coming soon) Train models and visualize results interactively
 
+![InsightFlow Demo](demo/insight-flow-demo.gif)
+
 ---
 
 ## Features
