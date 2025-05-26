@@ -5,7 +5,7 @@
 - Select features and target variables
 - Automatically detect if your task is classification or regression
 - Get tailored model recommendations
-- (Coming soon) Train models and visualize results interactively
+- Train models and visualize results interactively
 
 ![InsightFlow Demo](demo/insight-flow-demo.gif)
 
