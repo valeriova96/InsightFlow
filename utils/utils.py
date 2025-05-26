@@ -1,19 +1,14 @@
-from models.classification.models import (
-    train_logistic_regression_model,
-    train_random_forest_model,
-    train_multinomial_nb_model,
-)
 import pandas as pd
-from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from typing import Literal
 
 SEED = 42
 
 
-def clean_data(df, target_col):
+def clean_data(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
     """
-    Remove rows from the DataFrame where the target column has NaN or empty values.
+    Remove rows from the DataFrame where the target column has NaN or empty
+    values.
 
     Parameters:
     - df (pd.DataFrame): The input DataFrame.
@@ -27,7 +22,34 @@ def clean_data(df, target_col):
     return cleaned_df
 
 
-def split_data(df, feature_cols, target_col, test_size=0.2, random_state=SEED):
+def find_and_convert_cat_cols(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Identify categorical columns in the DataFrame and convert them to
+    numerical codes.
+
+    Parameters:
+    - df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+    - pd.DataFrame: DataFrame with categorical columns converted.
+    - list: List of categorical column names.
+    """
+    cat_cols = df.select_dtypes(include=['object']).columns.tolist()
+
+    for col in cat_cols:
+        df[col] = df[col].astype('category')
+        df[col] = df[col].cat.codes
+
+    return df
+
+
+def split_data(
+        df: pd.DataFrame,
+        feature_cols: list,
+        target_col: str,
+        test_size: float = 0.2,
+        random_state: int = SEED
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """
     Split the DataFrame into train/test sets.
 
@@ -35,11 +57,13 @@ def split_data(df, feature_cols, target_col, test_size=0.2, random_state=SEED):
     - df (pd.DataFrame): The input DataFrame.
     - feature_cols (list): List of column names to use as features.
     - target_col (str): Name of the target column.
-    - test_size (float): Proportion of the dataset to include in the test split.
+    - test_size (float): Proportion of the dataset to include in the test
+      split.
     - random_state (int): Random seed.
 
     Returns:
-    - X_train, X_test, y_train, y_test (tuple of pd.DataFrames/Series): Split data.
+    - X_train, X_test, y_train, y_test (tuple of pd.DataFrames/Series): Split
+      data.
     """
     X = df[feature_cols]
     y = df[target_col]
@@ -51,9 +75,14 @@ def split_data(df, feature_cols, target_col, test_size=0.2, random_state=SEED):
     return X_train, X_test, y_train, y_test
 
 
-def evaluate_model(model, X_test, y_test):
+def evaluate_class_model(
+        model: object,
+        X_test: pd.DataFrame,
+        y_test: pd.Series
+) -> pd.DataFrame:
     """
-    Evaluate a classification model and return precision, recall, and F1-score as a DataFrame.
+    Evaluate a classification model and return precision, recall, and F1-score
+    as a DataFrame.
 
     Parameters:
     - model: Trained scikit-learn classification model.
@@ -63,6 +92,8 @@ def evaluate_model(model, X_test, y_test):
     Returns:
     - pd.DataFrame: DataFrame with precision, recall, and F1-score per class.
     """
+    from sklearn.metrics import classification_report
+
     # Generate predictions
     y_pred = model.predict(X_test)
 
@@ -84,6 +115,40 @@ def evaluate_model(model, X_test, y_test):
     return metrics_df
 
 
+def evaluate_regr_model(
+        model: object,
+        X_test: pd.DataFrame,
+        y_test: pd.Series
+) -> pd.DataFrame:
+    """
+    Evaluate a regression model and return RMSE and R-squared as a DataFrame.
+
+    Parameters:
+    - model: Trained scikit-learn regression model.
+    - X_test (pd.DataFrame or np.ndarray): Test features.
+    - y_test (pd.Series or np.ndarray): True labels.
+
+    Returns:
+    - pd.DataFrame: DataFrame with RMSE and R-squared.
+    """
+    from sklearn.metrics import mean_squared_error, r2_score
+
+    # Generate predictions
+    y_pred = model.predict(X_test)
+
+    # Calculate RMSE and R-squared
+    mse = round(mean_squared_error(y_test, y_pred), 2)
+    r2 = round(r2_score(y_test, y_pred), 2)
+
+    # Create a DataFrame to hold the metrics
+    metrics_df = pd.DataFrame({
+        'MSE': [mse],
+        'R-squared': [r2]
+    })
+
+    return metrics_df
+
+
 def train_and_evaluate_model(
         task_type: Literal["classification", "regression"],
         model_name: str,
@@ -95,7 +160,8 @@ def train_and_evaluate_model(
     Train and evaluate a classification model based on the provided model name.
 
     Parameters:
-    - task_type (Literal["classification", "regression"]): Type of task to perform.
+    - task_type (Literal["classification", "regression"]): Type of task to
+      perform.
     - model_name (str): Name of the model to train.
     - dataset (pd.DataFrame): Input dataset.
     - feature_cols (list): List of feature column names.
@@ -106,6 +172,10 @@ def train_and_evaluate_model(
     """
     # Clean data
     cleaned_data = clean_data(dataset, target_col)
+
+    # Convert categorical columns to numerical codes
+    if task_type == "regression":
+        dataset = find_and_convert_cat_cols(cleaned_data)
 
     # Split data
     X_train, X_test, y_train, y_test = split_data(
@@ -118,28 +188,46 @@ def train_and_evaluate_model(
         case "classification":
             match model_name:
                 case "Logistic Regression":
+                    from models.classification.models import (
+                        train_logistic_regression_model
+                    )
                     model = train_logistic_regression_model(X_train, y_train)
                 case "Random Forest Classifier":
+                    from models.classification.models import (
+                        train_random_forest_model
+                    )
                     model = train_random_forest_model(X_train, y_train)
-                case "Multinomial Naive Bayes":
-                    model = train_multinomial_nb_model(X_train, y_train)
+                case "Support Vector Machine":
+                    from models.classification.models import (
+                        train_support_vector_machine
+                    )
+                    model = train_support_vector_machine(X_train, y_train)
                 case _:
                     raise ValueError(f"Unsupported model: {model_name}")
 
             # Evaluate the model
-            metrics_df = evaluate_model(model, X_test, y_test)
+            metrics_df = evaluate_class_model(model, X_test, y_test)
 
         case "regression":
             match model_name:
                 case "Linear Regression":
-                    pass
+                    from models.regression.models import (
+                        train_linear_regression_model
+                    )
+                    model = train_linear_regression_model(X_train, y_train)
                 case "Random Forest Regressor":
-                    pass
-                case "Gaussian Naive Bayes":
-                    pass
+                    from models.regression.models import (
+                        train_random_forest_model
+                    )
+                    model = train_random_forest_model(X_train, y_train)
+                case "Support Vector Regression":
+                    from models.regression.models import (
+                        train_support_vector_regession
+                    )
+                    model = train_support_vector_regession(X_train, y_train)
                 case _:
                     raise ValueError(f"Unsupported model: {model_name}")
 
-            # TODO Evaluate the model
+            metrics_df = evaluate_regr_model(model, X_test, y_test)
 
     return metrics_df

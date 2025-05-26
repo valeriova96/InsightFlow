@@ -14,13 +14,20 @@ st.set_page_config(
 CLASSIFICATION_MODELS = [
     "Logistic Regression",
     "Random Forest Classifier",
-    "Multinomial Naive Bayes",
+    "Support Vector Machine"
 ]
 
 REGRESSION_MODELS = [
     "Linear Regression",
     "Random Forest Regressor",
-    "Gaussian Naive Bayes"
+    "Support Vector Regression"
+]
+
+CLASSIFICATION_TARGETS = [
+    "binary",
+    "multiclass",
+    "multiclass-multioutput",
+    "multilabel-indicator"
 ]
 
 
@@ -121,7 +128,8 @@ def main():
                     y = st.session_state.input_df[
                         st.session_state.target
                         ].dropna()
-                    task_type = "classification" if "class" in type_of_target(y) \
+                    task_type = "classification" \
+                        if type_of_target(y) in CLASSIFICATION_TARGETS \
                         else "regression"
 
                     # Model recommendations
