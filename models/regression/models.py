@@ -35,7 +35,7 @@ def train_random_forest_model(X_train, y_train):
     return model
 
 
-def train_support_vector_regession(X_train, y_train):
+def train_support_vector_regression(X_train, y_train):
     """
     Train a support vector regression model on pre-split training data.
 

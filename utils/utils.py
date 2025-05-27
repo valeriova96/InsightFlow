@@ -222,9 +222,9 @@ def train_and_evaluate_model(
                     model = train_random_forest_model(X_train, y_train)
                 case "Support Vector Regression":
                     from models.regression.models import (
-                        train_support_vector_regession
+                        train_support_vector_regression
                     )
-                    model = train_support_vector_regession(X_train, y_train)
+                    model = train_support_vector_regression(X_train, y_train)
                 case _:
                     raise ValueError(f"Unsupported model: {model_name}")
 
