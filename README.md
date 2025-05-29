@@ -48,3 +48,7 @@ streamlit run app.py
 ```
 
 The app will open in your browser at [http://localhost:8501](http://localhost:8501).
+
+---
+
+Read the [article](https://medium.com/@valeriovalente96/how-i-created-the-perfect-portfolio-project-for-aspiring-data-scientists-3c5e9d9d451c) on Medium.
